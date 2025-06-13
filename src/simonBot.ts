@@ -9,7 +9,10 @@ export async function simonLoginAndNavigate({
   numeroDoc: string;
   password: string;
 }) {
-  const browser = await puppeteer.launch({ headless: false }); // headless: false para debug visual
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  });
   const page = await browser.newPage();
 
   await page.goto('https://simon.inder.gov.co/login/', { waitUntil: 'networkidle2' });
