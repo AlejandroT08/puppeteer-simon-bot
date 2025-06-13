@@ -1,4 +1,6 @@
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
+
+const BROWSERLESS_ENDPOINT = 'wss://chrome.browserless.io?token=2SUc6gaLOicUSVk4099e06e49944afbb504222100899d5151';
 
 export async function simonLoginAndNavigate({
   tipoDoc,
@@ -9,49 +11,42 @@ export async function simonLoginAndNavigate({
   numeroDoc: string;
   password: string;
 }) {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  const browser = await puppeteer.connect({
+    browserWSEndpoint: BROWSERLESS_ENDPOINT,
   });
 
-  const page = await browser.newPage();
-  await page.goto('https://simon.inder.gov.co/login/', { waitUntil: 'networkidle2' });
+  try {
+    const page = await browser.newPage();
+    await page.goto('https://simon.inder.gov.co/login/', { waitUntil: 'networkidle2', timeout: 60000 });
 
-  // 👉 1. Seleccionar tipo de documento
-  await page.waitForSelector('input[role="combobox"]');
-  await page.click('input[role="combobox"]');
-  await page.keyboard.type(tipoDoc);
-  await new Promise(resolve => setTimeout(resolve, 1000));
+    await page.waitForSelector('input[role="combobox"]', { timeout: 10000 });
+    await page.click('input[role="combobox"]');
+    await page.keyboard.type(tipoDoc);
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-  await page.evaluate(() => {
-    const opciones = Array.from(document.querySelectorAll('li'));
-    const cedula = opciones.find((el) =>
-      el.textContent?.trim() === 'Cédula de ciudadanía'
-    );
-    if (cedula) {
-      (cedula as HTMLElement).click();
-    }
-  });
+    await page.evaluate((tipoDoc) => {
+      const listItems = Array.from(document.querySelectorAll('li'));
+      const option = listItems.find((el) => el.textContent?.trim() === tipoDoc);
+      if (option) (option as HTMLElement).click();
+    }, tipoDoc);
 
-  await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-  // 👉 2. Ingresar número de documento con selector estable
-  await page.waitForSelector('input[placeholder*="Número de documento"]');
-  await page.type('input[placeholder*="Número de documento"]', numeroDoc.toString());
+    await page.waitForSelector('input[placeholder*="documento"]', { timeout: 10000 });
+    await page.type('input[placeholder*="documento"]', numeroDoc.toString());
 
-  await new Promise(resolve => setTimeout(resolve, 500));
+    await page.waitForSelector('#auth-login-v2-password', { timeout: 10000 });
+    await page.type('#auth-login-v2-password', password);
 
-  // 👉 3. Ingresar contraseña
-  await page.type('#auth-login-v2-password', password);
+    await page.click('button[type="submit"]');
+    await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 }).catch(() => {});
 
-  // 👉 4. Clic en botón INGRESAR
-  await page.click('button[type="submit"]');
-
-  // 👉 5. Esperar navegación
-  await page.waitForNavigation({ waitUntil: 'networkidle2' });
-
-  const html = await page.content();
-  await browser.close();
-
-  return html.includes('Reservas');
+    const html = await page.content();
+    return html.includes('Reservas');
+  } catch (error) {
+    console.error('❌ Error en login Browserless Puppeteer:', error);
+    throw error;
+  } finally {
+    await browser.close();
+  }
 }
