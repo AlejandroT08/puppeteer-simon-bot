@@ -1,22 +1,47 @@
-# Usa una imagen base con Node
-FROM node:18-alpine
+# Etapa de construcción
+FROM node:18-slim
 
-# Crea y usa el directorio de trabajo
+# Instalar dependencias necesarias para Puppeteer
+RUN apt-get update && apt-get install -y \
+    wget \
+    ca-certificates \
+    fonts-liberation \
+    libappindicator3-1 \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libgdk-pixbuf2.0-0 \
+    libnspr4 \
+    libnss3 \
+    libx11-xcb1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    xdg-utils \
+    --no-install-recommends \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
+
+# Seteamos la variable para descargar Chromium con Puppeteer
+ENV PUPPETEER_SKIP_DOWNLOAD=false
+
+# Seteamos el directorio de trabajo
 WORKDIR /app
 
-# Copia los archivos necesarios
+# Copiamos package.json e instalamos dependencias
 COPY package*.json ./
-COPY tsconfig.json ./
-COPY ./src ./src
-
-# Instala dependencias
 RUN npm install
 
-# Compila TypeScript
+# Copiamos el resto del código
+COPY . .
+
+# Construimos el proyecto
 RUN npm run build
 
-# Expón el puerto (debe coincidir con el usado en tu servidor, por ejemplo 3001)
+# Exponemos el puerto
 EXPOSE 3001
 
-# Comando para correr la app compilada
+# Ejecutamos la aplicación
 CMD ["node", "dist/index.js"]
