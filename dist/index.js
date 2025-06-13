@@ -12,11 +12,15 @@ app.use(body_parser_1.default.json());
 app.post('/bot', async (req, res) => {
     const { tipoDoc, numeroDoc, password } = req.body;
     try {
-        const success = await (0, simonBot_1.simonLoginAndNavigate)({ tipoDoc, numeroDoc, password });
-        res.status(200).json({ login: success });
+        const success = await (0, simonBot_1.simonLoginAndNavigate)({
+            tipoDoc,
+            numeroDoc: String(numeroDoc), // Asegura que es string
+            password,
+        });
+        res.json({ success });
     }
     catch (error) {
-        console.error('Error en login:', error);
+        console.error('❌ Error en login Puppeteer:', error); // 👈 clave
         res.status(500).json({ error: 'Error al intentar iniciar sesión' });
     }
 });

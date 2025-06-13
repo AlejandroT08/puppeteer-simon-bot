@@ -1,64 +1,29 @@
-# Usa una imagen base oficial de Node con soporte de Debian
-FROM node:18-slim
+# Imagen base de Puppeteer con Chrome ya instalado
+FROM ghcr.io/puppeteer/puppeteer:latest
 
-# Instala librerías necesarias para Puppeteer/Chromium
-RUN apt-get update && apt-get install -y \
-  wget \
-  ca-certificates \
-  fonts-liberation \
-  libappindicator3-1 \
-  libasound2 \
-  libatk-bridge2.0-0 \
-  libatk1.0-0 \
-  libc6 \
-  libcairo2 \
-  libcups2 \
-  libdbus-1-3 \
-  libexpat1 \
-  libfontconfig1 \
-  libgbm1 \
-  libgcc1 \
-  libglib2.0-0 \
-  libgtk-3-0 \
-  libnspr4 \
-  libnss3 \
-  libpango-1.0-0 \
-  libx11-6 \
-  libx11-xcb1 \
-  libxcb1 \
-  libxcomposite1 \
-  libxcursor1 \
-  libxdamage1 \
-  libxext6 \
-  libxfixes3 \
-  libxi6 \
-  libxrandr2 \
-  libxrender1 \
-  libxss1 \
-  libxtst6 \
-  lsb-release \
-  xdg-utils \
-  --no-install-recommends && \
-  apt-get clean && \
-  rm -rf /var/lib/apt/lists/*
-
-# Crea la carpeta de trabajo
+# Establecer el directorio de trabajo
 WORKDIR /app
 
-# Copia los archivos del proyecto
-COPY . .
+# Copiar archivos del proyecto
+COPY package*.json ./
+COPY tsconfig.json ./
+COPY src ./src
 
-# ⚠️ Asegura que Puppeteer descargue Chromium
-ENV PUPPETEER_SKIP_DOWNLOAD=false
+# Otorgar permisos al usuario pptruser (por defecto en esta imagen)
+USER root
+RUN chown -R pptruser:pptruser /app
 
-# Instala las dependencias de Node.js
+# Volver al usuario sin privilegios (más seguro)
+USER pptruser
+
+# Instalar dependencias
 RUN npm install
 
-# Compila TypeScript si aplica
+# Compilar TypeScript
 RUN npm run build
 
-# Expone el puerto para la API
+# Exponer el puerto del servidor
 EXPOSE 3001
 
-# Comando para iniciar la app
+# Comando por defecto para arrancar el servidor
 CMD ["npm", "start"]
