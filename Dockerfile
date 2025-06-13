@@ -1,21 +1,22 @@
-# 1. Imagen base con Node.js y npm
-FROM node:20
+# Usa una imagen base con Node
+FROM node:18-alpine
 
-# 2. Directorio de trabajo
+# Crea y usa el directorio de trabajo
 WORKDIR /app
 
-# 3. Copiar dependencias
+# Copia los archivos necesarios
 COPY package*.json ./
+COPY tsconfig.json ./
+COPY ./src ./src
+
+# Instala dependencias
 RUN npm install
 
-# 4. Copiar el resto del proyecto
-COPY . .
-
-# 5. Compilar TypeScript
+# Compila TypeScript
 RUN npm run build
 
-# 6. Exponer el puerto si usas HTTP (opcional)
-EXPOSE 3000
+# Expón el puerto (debe coincidir con el usado en tu servidor, por ejemplo 3001)
+EXPOSE 3001
 
-# 7. Comando de inicio
-CMD ["npm", "start"]
+# Comando para correr la app compilada
+CMD ["node", "dist/index.js"]
