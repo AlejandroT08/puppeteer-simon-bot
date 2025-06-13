@@ -12,12 +12,11 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "chrome-aws-lambda": "^10.1.0",
     "express": "^5.1.0",
-    "puppeteer": "^24.10.1",
-    "chrome-aws-lambda": "^10.1.0"
+    "puppeteer": "^24.10.1"
   },
-    "devDependencies": {
-    "typescript": "^5.3.3"
+  "devDependencies": {
+    "typescript": "^5.8.3"
   }
 }
-
